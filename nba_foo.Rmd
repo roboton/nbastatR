@@ -1,0 +1,54 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+devtools::install(".")
+library(nbastatR)
+library(tidyverse)
+```
+
+We use the `nbastatR` library to extract data from the NBA.  We're primarily concerned with finding causal effects in the data where some instance of random assignment, exogeneity, or matching can be assumed to better model counterfactuals.
+
+# Draft picks
+
+The first thing we examine is the value of various picks in the draft because these values are assigned randomly, by lottery with differential probabilities based on the 
+
+```{r}
+(drafts <- nbastatR::drafts(1994:2018))
+```
+
+```{r}
+drafts %>% filter(numberPickOverall == 1)
+```
+
+# Exogenous injuries
+
+```{r}
+nbastatR::ref_injuries()
+```
+
+# Clustering players
+
+```{r}
+(player_stats <- nbastatR::bref_players_stats(seasons = 2019))
+```
+
+
+```{r}
+player_stats <- players %>%
+  filter(minutesTotals > 1500) %>%
+  select(namePlayer, starts_with("ratio")) %>% #, starts_with("pct")) %>%
+  mutate_if(is.numeric, scale) %>%
+  column_to_rownames("namePlayer")
+```
+
+```{r fig.height=8, fig.width=24}
+methods <- c("ward.D", "ward.D2", "single", "complete", "average", "mcquitty",
+             "median", "centroid")
+sapply(methods, FUN=function(method) {
+  plot(hclust(dist(as.matrix(player_stats)), method = method))
+})
+```
+
